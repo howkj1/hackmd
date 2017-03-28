@@ -93,7 +93,7 @@ var cursorActivityDebounce = 50
 var cursorAnimatePeriod = 100
 var supportContainers = ['success', 'info', 'warning', 'danger']
 var supportCodeModes = ['javascript', 'typescript', 'jsx', 'htmlmixed', 'htmlembedded', 'css', 'xml', 'clike', 'clojure', 'ruby', 'python', 'shell', 'php', 'sql', 'haskell', 'coffeescript', 'yaml', 'pug', 'lua', 'cmake', 'nginx', 'perl', 'sass', 'r', 'dockerfile', 'tiddlywiki', 'mediawiki', 'go']
-var supportCharts = ['sequence', 'flow', 'graphviz', 'mermaid']
+var supportCharts = ['sequence', 'flow', 'graphviz', 'mermaid', 'abc']
 var supportHeaders = [
   {
     text: '# h1',
@@ -333,7 +333,7 @@ function updateStatusBar () {
     var end = head.line >= anchor.line ? head : anchor
     var selectionText = ' — Selected '
     var selectionCharCount = Math.abs(head.ch - anchor.ch)
-      // borrow from brackets EditorStatusBar.js
+    // borrow from brackets EditorStatusBar.js
     if (start.line !== end.line) {
       var lines = end.line - start.line + 1
       if (end.ch === 0) {
@@ -649,7 +649,7 @@ function checkEditorStyle () {
       },
       stop: function (e) {
         lastEditorWidth = ui.area.edit.width()
-                // workaround that scroll event bindings
+        // workaround that scroll event bindings
         window.preventSyncScrollToView = 2
         window.preventSyncScrollToEdit = true
         editor.setOption('viewportMargin', viewportMargin)
@@ -843,19 +843,19 @@ function changeMode (type) {
       ui.area.view.show()
       break
   }
-    // save mode to url
+  // save mode to url
   if (history.replaceState && window.loaded) history.replaceState(null, '', serverurl + '/' + noteid + '?' + window.currentMode.name)
   if (window.currentMode === modeType.view) {
     editor.getInputField().blur()
   }
   if (window.currentMode === modeType.edit || window.currentMode === modeType.both) {
     ui.toolbar.uploadImage.fadeIn()
-      // add and update status bar
+    // add and update status bar
     if (!editorInstance.statusBar) {
       editorInstance.addStatusBar()
       updateStatusBar()
     }
-      // work around foldGutter might not init properly
+    // work around foldGutter might not init properly
     editor.setOption('foldGutter', false)
     editor.setOption('foldGutter', true)
   } else {
@@ -1126,7 +1126,8 @@ ui.toolbar.import.dropbox.click(function () {
 })
 // import from google drive
 function buildImportFromGoogleDrive () {
-  FilePicker({
+  /* eslint-disable no-unused-vars */
+  let picker = new FilePicker({
     apiKey: GOOGLE_API_KEY,
     clientId: GOOGLE_CLIENT_ID,
     buttonEl: ui.toolbar.import.googleDrive,
@@ -1153,6 +1154,7 @@ function buildImportFromGoogleDrive () {
       }
     }
   })
+  /* eslint-enable no-unused-vars */
 }
 // import from gist
 ui.toolbar.import.gist.click(function () {
@@ -1298,7 +1300,7 @@ function selectRevision (time) {
               var currIndex = patch.start1 + bias
               for (var i = 0; i < patch.diffs.length; i++) {
                 var diff = patch.diffs[i]
-                        // ignore if diff only contains line breaks
+                // ignore if diff only contains line breaks
                 if ((diff[1].match(/\n/g) || []).length === diff[1].length) continue
                 var prePos
                 var postPos
@@ -1987,7 +1989,10 @@ function updateAuthorshipInner () {
             ch: preLine.length
           }
           if (JSON.stringify(prePos) !== JSON.stringify(_postPos)) {
-            mark.textmarkers.push({ userid: author.userid, pos: [prePos, _postPos] })
+            mark.textmarkers.push({
+              userid: author.userid,
+              pos: [prePos, _postPos]
+            })
             startLine++
           }
           authorMarks[prePos.line] = mark
@@ -2001,7 +2006,10 @@ function updateAuthorshipInner () {
             ch: 0
           }
           if (JSON.stringify(_prePos) !== JSON.stringify(postPos)) {
-            mark.textmarkers.push({ userid: author.userid, pos: [_prePos, postPos] })
+            mark.textmarkers.push({
+              userid: author.userid,
+              pos: [_prePos, postPos]
+            })
             endLine--
           }
           authorMarks[postPos.line] = mark
@@ -2374,7 +2382,11 @@ function sortOnlineUserList (list) {
           if (!usera.idle && userb.idle) { return -1 } else if (usera.idle && !userb.idle) { return 1 } else {
             if (usera.name && userb.name && usera.name.toLowerCase() < userb.name.toLowerCase()) {
               return -1
-            } else if (usera.name && userb.name && usera.name.toLowerCase() > userb.name.toLowerCase()) { return 1 } else { if (usera.color && userb.color && usera.color.toLowerCase() < userb.color.toLowerCase()) { return -1 } else if (usera.color && userb.color && usera.color.toLowerCase() > userb.color.toLowerCase()) { return 1 } else { return 0 } }
+            } else if (usera.name && userb.name && usera.name.toLowerCase() > userb.name.toLowerCase()) {
+              return 1
+            } else {
+              if (usera.color && userb.color && usera.color.toLowerCase() < userb.color.toLowerCase()) { return -1 } else if (usera.color && userb.color && usera.color.toLowerCase() > userb.color.toLowerCase()) { return 1 } else { return 0 }
+            }
           }
         }
       }
@@ -2410,11 +2422,11 @@ function deduplicateOnlineUsers (list) {
       var found = false
       for (var j = 0; j < _onlineUsers.length; j++) {
         if (_onlineUsers[j].userid === user.userid) {
-                    // keep self color when login
+          // keep self color when login
           if (user.id === window.personalInfo.id) {
             _onlineUsers[j].color = user.color
           }
-                    // keep idle state if any of self client not idle
+          // keep idle state if any of self client not idle
           if (!user.idle) {
             _onlineUsers[j].idle = user.idle
             _onlineUsers[j].color = user.color
@@ -2458,38 +2470,38 @@ function emitUserStatus (force) {
 
 function checkCursorTag (coord, ele) {
   if (!ele) return // return if element not exists
-    // set margin
+  // set margin
   var tagRightMargin = 0
   var tagBottomMargin = 2
-    // use sizer to get the real doc size (won't count status bar and gutters)
+  // use sizer to get the real doc size (won't count status bar and gutters)
   var docWidth = ui.area.codemirrorSizer.width()
-    // get editor size (status bar not count in)
+  // get editor size (status bar not count in)
   var editorHeight = ui.area.codemirror.height()
-    // get element size
+  // get element size
   var width = ele.outerWidth()
   var height = ele.outerHeight()
   var padding = (ele.outerWidth() - ele.width()) / 2
-    // get coord position
+  // get coord position
   var left = coord.left
   var top = coord.top
-    // get doc top offset (to workaround with viewport)
+  // get doc top offset (to workaround with viewport)
   var docTopOffset = ui.area.codemirrorSizerInner.position().top
-    // set offset
+  // set offset
   var offsetLeft = -3
   var offsetTop = defaultTextHeight
-    // only do when have width and height
+  // only do when have width and height
   if (width > 0 && height > 0) {
-        // flip x when element right bound larger than doc width
+    // flip x when element right bound larger than doc width
     if (left + width + offsetLeft + tagRightMargin > docWidth) {
       offsetLeft = -(width + tagRightMargin) + padding + offsetLeft
     }
-        // flip y when element bottom bound larger than doc height
-        // and element top position is larger than element height
+    // flip y when element bottom bound larger than doc height
+    // and element top position is larger than element height
     if (top + docTopOffset + height + offsetTop + tagBottomMargin > Math.max(editor.doc.height, editorHeight) && top + docTopOffset > height + tagBottomMargin) {
       offsetTop = -(height)
     }
   }
-    // set position
+  // set position
   ele[0].style.left = offsetLeft + 'px'
   ele[0].style.top = offsetTop + 'px'
 }
@@ -2532,7 +2544,7 @@ function buildCursor (user) {
     var icon = '<i class="fa ' + iconClass + '"></i>'
 
     let cursortag = $('<div class="cursortag">' + icon + '&nbsp;<span class="name">' + user.name + '</span></div>')
-        // cursortag[0].style.background = color;
+    // cursortag[0].style.background = color;
     cursortag[0].style.color = user.color
 
     cursor.attr('data-mode', 'hover')
@@ -3301,17 +3313,13 @@ $(editor.getInputField())
           return !isInCode
         }
       },
-      { // extra tags for blockquote
-        match: /(?:^|\n|\s)(>.*|\s|)((\^|)\[(\^|)\](\[\]|\(\)|:|)\s*\w*)$/,
+      { // extra tags for list
+        match: /(^[>\s]*[-+*]\s(?:\[[x ]\]|.*))(\[\])(\w*)$/,
         search: function (term, callback) {
-          var line = editor.getLine(editor.getCursor().line)
-          var quote = line.match(this.match)[1].trim()
           var list = []
-          if (quote.indexOf('>') === 0) {
-            $.map(supportExtraTags, function (extratag) {
-              if (extratag.search.indexOf(term) === 0) { list.push(extratag.command()) }
-            })
-          }
+          $.map(supportExtraTags, function (extratag) {
+            if (extratag.search.indexOf(term) === 0) { list.push(extratag.command()) }
+          })
           $.map(supportReferrals, function (referral) {
             if (referral.search.indexOf(term) === 0) { list.push(referral.text) }
           })
@@ -3324,13 +3332,17 @@ $(editor.getInputField())
           return !isInCode
         }
       },
-      { // extra tags for list
-        match: /(^[>\s]*[-+*]\s(?:\[[x ]\]|.*))(\[\])(\w*)$/,
+      { // extra tags for blockquote
+        match: /(?:^|\n|\s)(>.*|\s|)((\^|)\[(\^|)\](\[\]|\(\)|:|)\s*\w*)$/,
         search: function (term, callback) {
+          var line = editor.getLine(editor.getCursor().line)
+          var quote = line.match(this.match)[1].trim()
           var list = []
-          $.map(supportExtraTags, function (extratag) {
-            if (extratag.search.indexOf(term) === 0) { list.push(extratag.command()) }
-          })
+          if (quote.indexOf('>') === 0) {
+            $.map(supportExtraTags, function (extratag) {
+              if (extratag.search.indexOf(term) === 0) { list.push(extratag.command()) }
+            })
+          }
           $.map(supportReferrals, function (referral) {
             if (referral.search.indexOf(term) === 0) { list.push(referral.text) }
           })

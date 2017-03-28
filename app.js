@@ -29,6 +29,26 @@ var auth = require('./lib/auth.js')
 var response = require('./lib/response.js')
 var models = require('./lib/models')
 
+// generate front-end constants by template
+var configJson = config.raw
+var constpath = path.join(__dirname, './public/js/lib/common/constant.ejs')
+var googleApiKey = (fs.existsSync('/run/secrets/google_apiKey') && config.handleDockerSecret('google_apiKey')) || process.env.HMD_GOOGLE_API_KEY || (configJson.google && configJson.google.apiKey) || ''
+var googleClientID = (fs.existsSync('/run/secrets/google_clientID') && config.handleDockerSecret('google_clientID')) || process.env.HMD_GOOGLE_CLIENT_ID || (configJson.google && configJson.google.clientID) || ''
+var dropboxAppKey = (fs.existsSync('/run/secrets/dropbox_appKey') && config.handleDockerSecret('dropbox_appKey')) || process.env.HMD_DROPBOX_APP_KEY || (configJson.dropbox && configJson.dropbox.appKey) || ''
+var data = {
+  domain: config.domain,
+  urlpath: config.urlpath,
+  debug: config.debug,
+  version: config.version,
+  GOOGLE_API_KEY: googleApiKey,
+  GOOGLE_CLIENT_ID: googleClientID,
+  DROPBOX_APP_KEY: dropboxAppKey
+}
+ejs.renderFile(constpath, data, {}, function (err, str) {
+  if (err) throw new Error(err)
+  fs.writeFileSync(path.join(__dirname, './public/build/constant.js'), str)
+})
+
 // server setup
 var app = express()
 var server = null
@@ -97,7 +117,7 @@ app.use(helmet.hsts({
 }))
 
 i18n.configure({
-  locales: ['en', 'zh', 'fr', 'de', 'ja', 'es', 'el', 'pt', 'it', 'tr', 'ru', 'nl', 'hr', 'pl', 'uk', 'hi', 'sv', 'eo'],
+  locales: ['en', 'zh', 'fr', 'de', 'ja', 'es', 'ca', 'el', 'pt', 'it', 'tr', 'ru', 'nl', 'hr', 'pl', 'uk', 'hi', 'sv', 'eo'],
   cookie: 'locale',
   directory: path.join(__dirname, '/locales')
 })
@@ -218,7 +238,8 @@ app.get('/status', function (req, res, next) {
   realtime.getStatus(function (data) {
     res.set({
       'Cache-Control': 'private', // only cache by client
-      'X-Robots-Tag': 'noindex, nofollow' // prevent crawling
+      'X-Robots-Tag': 'noindex, nofollow', // prevent crawling
+      'HackMD-Version': config.version
     })
     res.send(data)
   })
@@ -632,6 +653,7 @@ process.on('uncaughtException', function (err) {
 
 // install exit handler
 function handleTermSignals () {
+  logger.info('hackmd has been killed by signal, try to exit gracefully...')
   config.maintenance = true
   // disconnect all socket.io clients
   Object.keys(io.sockets.sockets).forEach(function (key) {
@@ -656,3 +678,4 @@ function handleTermSignals () {
 }
 process.on('SIGINT', handleTermSignals)
 process.on('SIGTERM', handleTermSignals)
+process.on('SIGQUIT', handleTermSignals)

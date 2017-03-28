@@ -3,8 +3,8 @@
 // allow some attributes
 var whiteListAttr = ['id', 'class', 'style']
 window.whiteListAttr = whiteListAttr
-// allow link starts with '.', '/' and custom protocol with '://'
-var linkRegex = /^([\w|-]+:\/\/)|^([.|/])+/
+// allow link starts with '.', '/' and custom protocol with '://', exclude link starts with javascript://
+var linkRegex = /^(?!javascript:\/\/)([\w|-]+:\/\/)|^([.|/])+/
 // allow data uri, from https://gist.github.com/bgrins/6194623
 var dataUriRegex = /^\s*data:([a-z]+\/[a-z0-9-+.]+(;[a-z-]+=[a-z0-9-]+)?)?(;base64)?,([a-z0-9!$&',()*+;=\-._~:@/?%\s]*)\s*$/i
 // custom white list
@@ -26,30 +26,30 @@ var filterXSSOptions = {
   allowCommentTag: true,
   whiteList: whiteList,
   escapeHtml: function (html) {
-        // allow html comment in multiple lines
+    // allow html comment in multiple lines
     return html.replace(/<(.*?)>/g, '&lt;$1&gt;')
   },
   onIgnoreTag: function (tag, html, options) {
-        // allow comment tag
+    // allow comment tag
     if (tag === '!--') {
             // do not filter its attributes
       return html
     }
   },
   onTagAttr: function (tag, name, value, isWhiteAttr) {
-        // allow href and src that match linkRegex
+    // allow href and src that match linkRegex
     if (isWhiteAttr && (name === 'href' || name === 'src') && linkRegex.test(value)) {
       return name + '="' + filterXSS.escapeAttrValue(value) + '"'
     }
-        // allow data uri in img src
+    // allow data uri in img src
     if (isWhiteAttr && (tag === 'img' && name === 'src') && dataUriRegex.test(value)) {
       return name + '="' + filterXSS.escapeAttrValue(value) + '"'
     }
   },
   onIgnoreTagAttr: function (tag, name, value, isWhiteAttr) {
-        // allow attr start with 'data-' or in the whiteListAttr
+    // allow attr start with 'data-' or in the whiteListAttr
     if (name.substr(0, 5) === 'data-' || window.whiteListAttr.indexOf(name) !== -1) {
-            // escape its value using built-in escapeAttrValue function
+      // escape its value using built-in escapeAttrValue function
       return name + '="' + filterXSS.escapeAttrValue(value) + '"'
     }
   }

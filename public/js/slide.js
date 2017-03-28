@@ -1,5 +1,5 @@
 /* eslint-env browser, jquery */
-/* global serverurl, Reveal */
+/* global serverurl, Reveal, RevealMarkdown */
 
 require('../css/extra.css')
 require('../css/site.css')
@@ -40,24 +40,22 @@ const deps = [{
     return !document.body.classList
   }
 }, {
-  src: `${serverurl}/js/reveal-markdown.js`,
-  callback () {
-    const slideOptions = {
-      separator: '^(\r\n?|\n)---(\r\n?|\n)$',
-      verticalSeparator: '^(\r\n?|\n)----(\r\n?|\n)$'
-    }
-    const slides = window.RevealMarkdown.slidify(body, slideOptions)
-    $('.slides').html(slides)
-    window.RevealMarkdown.initialize()
-    $('.slides').show()
-  }
-}, {
   src: `${serverurl}/build/reveal.js/plugin/notes/notes.js`,
   async: true,
   condition () {
     return !!document.body.classList
   }
 }]
+
+const slideOptions = {
+  separator: '^(\r\n?|\n)---(\r\n?|\n)$',
+  verticalSeparator: '^(\r\n?|\n)----(\r\n?|\n)$'
+}
+const slides = RevealMarkdown.slidify(body, slideOptions)
+$('.slides').html(slides)
+RevealMarkdown.initialize()
+removeDOMEvents($('.slides'))
+$('.slides').show()
 
 // default options to init reveal.js
 const defaultOptions = {
@@ -109,7 +107,6 @@ function renderSlide (event) {
   if (window.location.search.match(/print-pdf/gi)) {
     const slides = $('.slides')
     let title = document.title
-    removeDOMEvents(slides)
     finishView(slides)
     document.title = title
     Reveal.layout()
@@ -117,7 +114,6 @@ function renderSlide (event) {
     const markdown = $(event.currentSlide)
     if (!markdown.attr('data-rendered')) {
       let title = document.title
-      removeDOMEvents(markdown)
       finishView(markdown)
       markdown.attr('data-rendered', 'true')
       document.title = title
